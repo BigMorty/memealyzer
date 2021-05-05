@@ -1,7 +1,7 @@
-param basename string = ''
+param basename string
 param location string = 'westus2'
 param failoverLocation string = 'eastus2'
-param principalId string = ''
+param principalId string
 
 var secrets = [
   'get'
@@ -17,7 +17,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   sku: {
     name: 'Standard_LRS'
   }
-  properties: {}
 }
 
 resource form_recognizer 'Microsoft.CognitiveServices/accounts@2017-04-18' = {
@@ -40,7 +39,7 @@ resource text_analytics 'Microsoft.CognitiveServices/accounts@2017-04-18' = {
   location: location
   kind: 'TextAnalytics'
   sku: {
-    name: 'S0'
+    name: 'S'
   }
   properties: {
     customSubDomainName: '${basename}ta'
@@ -90,40 +89,40 @@ resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
       }
     ]
   }
-}
 
-resource cosmos_key_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${key_vault.name}/CosmosKey'
-  properties: {
-    value: listKeys(cosmos_account.id, cosmos_account.apiVersion).primaryMasterKey
+  resource cosmos_key_secret 'secrets' = {
+    name: 'CosmosKey'
+    properties: {
+      value: listKeys(cosmos_account.id, cosmos_account.apiVersion).primaryMasterKey
+    }
   }
-}
 
-resource storage_key_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${key_vault.name}/StorageKey'
-  properties: {
-    value: listKeys(storage.id, storage.apiVersion).keys[0].value
+  resource storage_key_secret 'secrets' = {
+    name: 'StorageKey'
+    properties: {
+      value: listKeys(storage.id, storage.apiVersion).keys[0].value
+    }
   }
-}
 
-resource signalr_connection_string_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${key_vault.name}/SignalRConnectionString'
-  properties: {
-    value: listKeys(signalr.id, signalr.apiVersion).primaryConnectionString
+  resource signalr_connection_string_secret 'secrets' = {
+    name: 'SignalRConnectionString'
+    properties: {
+      value: listKeys(signalr.id, signalr.apiVersion).primaryConnectionString
+    }
   }
-}
 
-resource storage_connection_string_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${key_vault.name}/StorageConnectionString'
-  properties: {
-    value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storage.id, storage.apiVersion).keys[0].value}'
+  resource storage_connection_string_secret 'secrets' = {
+    name: 'StorageConnectionString'
+    properties: {
+      value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storage.id, storage.apiVersion).keys[0].value}'
+    }
   }
-}
 
-resource service_bus_connection_string_secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${key_vault.name}/ServiceBusConnectionString'
-  properties: {
-    value: listKeys(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', service_bus.name, 'RootManageSharedAccessKey'), service_bus.apiVersion).primaryConnectionString
+  resource service_bus_connection_string_secret 'secrets' = {
+    name: 'ServiceBusConnectionString'
+    properties: {
+      value: listKeys(resourceId('Microsoft.ServiceBus/Namespaces/AuthorizationRules', service_bus.name, 'RootManageSharedAccessKey'), service_bus.apiVersion).primaryConnectionString
+    }
   }
 }
 
@@ -148,41 +147,41 @@ resource cosmos_account 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' = {
       }
     ]
   }
-}
 
-resource cosmos_sqldb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2020-04-01' = {
-  name: '${cosmos_account.name}/memealyzer'
-  properties: {
-    options: {
-      throughput: 400
-    }
-    resource: {
-      id: 'memealyzer'
-    }
-  }
-}
-
-resource cosmos_sqldb_container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2020-04-01' = {
-  name: '${cosmos_sqldb.name}/images'
-  properties: {
-    options: {
-      throughput: 400
-    }
-    resource: {
-      partitionKey: {
-        paths: [
-          '/partitionKey'
-        ]
+  resource cosmos_sqldb 'sqlDatabases' = {
+    name: 'memealyzer'
+    properties: {
+      options: {
+        throughput: 400
       }
-      id: 'images'
-      uniqueKeyPolicy: {
-        uniqueKeys: [
-          {
+      resource: {
+        id: 'memealyzer'
+      }
+    }
+
+    resource cosmos_sqldb_container 'containers' = {
+      name: 'images'
+      properties: {
+        options: {
+          throughput: 400
+        }
+        resource: {
+          partitionKey: {
             paths: [
-              '/uid'
+              '/partitionKey'
             ]
           }
-        ]
+          id: 'images'
+          uniqueKeyPolicy: {
+            uniqueKeys: [
+              {
+                paths: [
+                  '/uid'
+                ]
+              }
+            ]
+          }
+        }
       }
     }
   }
@@ -228,13 +227,12 @@ resource appconfig 'Microsoft.AppConfiguration/configurationStores@2020-06-01' =
   identity: {
     type: 'SystemAssigned'
   }
-  properties: {}
-}
 
-resource appconfig_borderstyle 'Microsoft.AppConfiguration/configurationStores/keyValues@2020-07-01-preview' = {
-  name: '${appconfig.name}/borderStyle'
-  properties: {
-    value: 'solid'
+  resource appconfig_borderstyle 'keyValues@2020-07-01-preview' = {
+    name: 'borderStyle'
+    properties: {
+      value: 'solid'
+    }
   }
 }
 
@@ -268,7 +266,6 @@ resource plan 'Microsoft.Web/serverfarms@2020-06-01' = {
     size: 'S1'
     name: 'S1'
   }
-  properties: {}
 }
 
 resource function 'Microsoft.Web/sites@2020-06-01' = {
@@ -290,22 +287,23 @@ resource function 'Microsoft.Web/sites@2020-06-01' = {
       }
       ftpsState: 'FtpsOnly'
     }
+    httpsOnly: true
   }
-}
 
-resource function_app_settings 'Microsoft.Web/sites/config@2018-11-01' = {
-  name: '${basename}function/appsettings'
-  properties: {
-    'AZURE_KEYVAULT_ENDPOINT': key_vault.properties.vaultUri
-    'AzureWebJobsStorage': 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storage.id, storage.apiVersion).keys[0].value}'
-    'APPINSIGHTS_INSTRUMENTATIONKEY': logging.properties.InstrumentationKey
-    'FUNCTIONS_WORKER_RUNTIME': 'dotnet'
-    'FUNCTIONS_EXTENSION_VERSION': '~3'
-    'WEBSITES_ENABLE_APP_SERVICE_STORAGE': 'false'
-    'AZURE_CLIENT_SYNC_QUEUE_NAME': 'sync'
-    'AZURE_STORAGE_CONNECTION_STRING_SECRET_NAME': 'StorageConnectionString'
-    'AZURE_SIGNALR_CONNECTION_STRING_SECRET_NAME': 'SignalRConnectionString'
-    'WEBSITE_RUN_FROM_PACKAGE': ''
+  resource function_app_settings 'config@2018-11-01' = {
+    name: 'appsettings'
+    properties: {
+      'AZURE_KEYVAULT_ENDPOINT': key_vault.properties.vaultUri
+      'AzureWebJobsStorage': 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storage.id, storage.apiVersion).keys[0].value}'
+      'APPINSIGHTS_INSTRUMENTATIONKEY': logging.properties.InstrumentationKey
+      'FUNCTIONS_WORKER_RUNTIME': 'dotnet'
+      'FUNCTIONS_EXTENSION_VERSION': '~3'
+      'WEBSITES_ENABLE_APP_SERVICE_STORAGE': 'false'
+      'AZURE_CLIENT_SYNC_QUEUE_NAME': 'sync'
+      'AZURE_STORAGE_CONNECTION_STRING_SECRET_NAME': 'StorageConnectionString'
+      'AZURE_SIGNALR_CONNECTION_STRING_SECRET_NAME': 'SignalRConnectionString'
+      'WEBSITE_RUN_FROM_PACKAGE': ''
+    }
   }
 }
 
@@ -326,23 +324,23 @@ resource service_bus 'Microsoft.ServiceBus/namespaces@2017-04-01' = {
   sku: {
     name: 'Basic'
   }
-}
 
-resource messages 'Microsoft.ServiceBus/namespaces/queues@2017-04-01' = {
-  name: '${service_bus.name}/messages'
-  properties: {
-    defaultMessageTimeToLive: 'PT30S'
+  resource messages 'queues' = {
+    name: 'messages'
+    properties: {
+      defaultMessageTimeToLive: 'PT30S'
+    }
+  }
+
+  resource sync 'queues' = {
+    name: 'sync'
+    properties: {
+      defaultMessageTimeToLive: 'PT30S'
+    }
   }
 }
 
-resource sync 'Microsoft.ServiceBus/namespaces/queues@2017-04-01' = {
-  name: '${service_bus.name}/sync'
-  properties: {
-    defaultMessageTimeToLive: 'PT30S'
-  }
-}
-
-module cli_perms './roles.bicep' = {
+module cli_perms './rolesapp.bicep' = {
   name: 'cli_perms-${resourceGroup().name}'
   params: {
     principalId: principalId
@@ -351,7 +349,7 @@ module cli_perms './roles.bicep' = {
   }
 }
 
-module function_perms './roles.bicep' = {
+module function_perms './rolesapp.bicep' = {
   name: 'function_perms-${resourceGroup().name}'
   params: {
     principalId: function.identity.principalId
@@ -359,7 +357,7 @@ module function_perms './roles.bicep' = {
   }
 }
 
-module aks_kubelet_perms './roles.bicep' = {
+module aks_kubelet_perms './rolesapp.bicep' = {
   name: 'aks_kubelet_perms-${resourceGroup().name}'
   params: {
     principalId: aks.properties.identityProfile.kubeletidentity.objectId

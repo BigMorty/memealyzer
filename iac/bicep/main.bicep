@@ -1,22 +1,26 @@
 targetScope = 'subscription'
 
-param basename string = ''
+@minLength(1)
+@maxLength(17)
+@description('Prefix for all resources, i.e. {basename}storage')
+param basename string
+@description('Primary location for all resources')
 param location string = 'westus2'
+@description('Failover location for Cosmos DB')
 param failoverLocation string = 'eastus2'
-param principalId string = ''
-
-var resourceGroupName = '${basename}rg'
+@minLength(1)
+param principalId string
 
 resource rg 'Microsoft.Resources/resourceGroups@2020-06-01' = {
-  name: resourceGroupName
+  name: '${basename}rg'
   location: location
 }
 
 module resources './resources.bicep' = {
-  name: 'resources-${resourceGroupName}'
-  scope: resourceGroup(rg.name)
+  name: '${rg.name}-resources'
+  scope: rg
   params: {
-    basename: basename
+    basename: toLower(basename)
     location: location
     failoverLocation: failoverLocation
     principalId: principalId
