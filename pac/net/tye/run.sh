@@ -11,4 +11,6 @@ source $ROOT/scripts/login.sh
 
 echo "RUNNING APPLICATION"
 
-tye run --logs console -v debug --watch --tags $ENV
+source $ROOT/scripts/cosmos.sh
+
+tye run --watch --logs console -v debug --tags $ENV

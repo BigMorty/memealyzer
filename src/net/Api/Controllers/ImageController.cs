@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lib;
-using Lib.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Lib;
+using Lib.Model;
 
 namespace Api.Controllers
 {
@@ -26,7 +24,7 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<Image> Post([FromBody] Image image = null)
         {
-            return await clients.EnqueueImageAsync(image);
+            return await clients.IngestClient.Ingest(image);
         }
 
         [HttpGet]

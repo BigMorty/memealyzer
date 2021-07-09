@@ -95,20 +95,15 @@ spec:
                 configMapKeyRef:
                   key: AZURE_TEXT_ANALYTICS_ENDPOINT
                   name: env
-            - name: MEME_ENDPOINT
+            - name: IMAGE_ENDPOINT
               valueFrom:
                 configMapKeyRef:
-                  key: MEME_ENDPOINT
+                  key: IMAGE_ENDPOINT
                   name: env
             - name: AZURE_STORAGE_TYPE
               valueFrom:
                 configMapKeyRef:
                   key: AZURE_STORAGE_TYPE
-                  name: env
-            - name: AZURE_STORAGE_KEY_SECRET_NAME
-              valueFrom:
-                configMapKeyRef:
-                  key: AZURE_STORAGE_KEY_SECRET_NAME
                   name: env
             - name: AZURE_STORAGE_TABLE_NAME
               valueFrom:
